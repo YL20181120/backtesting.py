@@ -370,6 +370,10 @@ class Position:
         return sum(trade.pl for trade in self.__broker.trades)
 
     @property
+    def entry_price(self) -> float:
+        return sum(trade.entry_price * trade.size for trade in self.__broker.trades) / sum(trade.size for trade in self.__broker.trades)
+
+    @property
     def pl_pct(self) -> float:
         """Profit (positive) or loss (negative) of the current position in percent."""
         total_invested = sum(trade.entry_price * abs(trade.size) for trade in self.__broker.trades)
@@ -385,12 +389,12 @@ class Position:
         """True if the position is short (position size is negative)."""
         return self.size < 0
 
-    def close(self, portion: float = 1.):
+    def close(self, portion: float = 1., tag: str = None):
         """
         Close portion of position by closing `portion` of each active trade. See `Trade.close`.
         """
         for trade in self.__broker.trades:
-            trade.close(portion)
+            trade.close(portion, tag=tag)
 
     def __repr__(self):
         return f'<Position: {self.size} ({len(self.__broker.trades)} trades)>'
@@ -422,7 +426,8 @@ class Order:
                  sl_price: Optional[float] = None,
                  tp_price: Optional[float] = None,
                  parent_trade: Optional['Trade'] = None,
-                 tag: object = None):
+                 tag: object = None,
+                 exit_tag = None):
         self.__broker = broker
         assert size != 0
         self.__size = size
@@ -432,6 +437,7 @@ class Order:
         self.__tp_price = tp_price
         self.__parent_trade = parent_trade
         self.__tag = tag
+        self.__exit_tag = exit_tag
 
     def _replace(self, **kwargs):
         for k, v in kwargs.items():
@@ -526,6 +532,14 @@ class Order:
         """
         return self.__tag
 
+    @property
+    def exit_tag(self):
+        """
+        Arbitrary value (such as a string) which, if set, enables tracking
+        of this order and the associated `Trade` (see `Trade.tag`).
+        """
+        return self.__exit_tag
+
     __pdoc__['Order.parent_trade'] = False
 
     # Extra properties
@@ -572,6 +586,7 @@ class Trade:
         self.__sl_order: Optional[Order] = None
         self.__tp_order: Optional[Order] = None
         self.__tag = tag
+        self.__exit_tag = None
         self._commissions = 0
 
     def __repr__(self):
@@ -587,11 +602,11 @@ class Trade:
     def _copy(self, **kwargs):
         return copy(self)._replace(**kwargs)
 
-    def close(self, portion: float = 1.):
+    def close(self, portion: float = 1., tag: str = None):
         """Place new `Order` to close `portion` of the trade at next market price."""
         assert 0 < portion <= 1, "portion must be a fraction between 0 and 1"
         size = copysign(max(1, round(abs(self.__size) * portion)), -self.__size)
-        order = Order(self.__broker, size, parent_trade=self, tag=self.__tag)
+        order = Order(self.__broker, size, parent_trade=self, tag=self.__tag, exit_tag=tag)
         self.__broker.orders.insert(0, order)
 
     # Fields getters
