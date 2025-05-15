@@ -653,6 +653,19 @@ class Trade:
         return self.__tag
 
     @property
+    def exit_tag(self):
+        """
+        A tag value inherited from the `Order` that opened
+        this trade.
+
+        This can be used to track trades and apply conditional
+        logic / subgroup analysis.
+
+        See also `Order.tag`.
+        """
+        return self.__exit_tag
+
+    @property
     def _sl_order(self):
         return self.__sl_order
 
