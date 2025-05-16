@@ -864,7 +864,7 @@ class _Broker:
 
     @property
     def equity(self) -> float:
-        return self._cash + sum(trade.pl for trade in self.trades)
+        return self._cash + sum(trade.pl for trade in self.trades if trade.exit_tag is not None)
 
     @property
     def margin_available(self) -> float:
