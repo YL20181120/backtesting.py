@@ -1357,7 +1357,7 @@ class Backtest:
                 if self._finalize_trades is True:
                     # Close any remaining open trades so they produce some stats
                     for trade in reversed(broker.trades):
-                        trade.close()
+                        trade.close(tag="回测结束平仓")
 
                     # HACK: Re-run broker one last time to handle close orders placed in the last
                     #  strategy iteration. Use the same OHLC values as in the last broker iteration.
