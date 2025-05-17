@@ -1375,6 +1375,7 @@ class Backtest:
                 ohlc_data=self._data,
                 risk_free_rate=0.0,
                 strategy_instance=strategy,
+                orders=broker.orders
             )
 
         return self._results
